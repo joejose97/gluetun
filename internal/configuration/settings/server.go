@@ -19,9 +19,13 @@ type ControlServer struct {
 	// Log can be true or false to enable logging on requests.
 	// It cannot be nil in the internal state.
 	Log *bool
+	// Username for Basic Auth.
+	Username *string
+	// Password for Basic Auth.
+	Password *string
 }
 
-func (c ControlServer) validate() (err error) {
+func (c ControlServer) validate(warner Warner) (err error) {
 	_, portStr, err := net.SplitHostPort(*c.Address)
 	if err != nil {
 		return fmt.Errorf("listening address is not valid: %w", err)
@@ -39,13 +43,19 @@ func (c ControlServer) validate() (err error) {
 			ErrControlServerPrivilegedPort, port, uid)
 	}
 
+	if *c.Username == "" || *c.Password == "" {
+		warner.Warn("control server has empty username/password")
+	}
+
 	return nil
 }
 
 func (c *ControlServer) copy() (copied ControlServer) {
 	return ControlServer{
-		Address: gosettings.CopyPointer(c.Address),
-		Log:     gosettings.CopyPointer(c.Log),
+		Address:  gosettings.CopyPointer(c.Address),
+		Log:      gosettings.CopyPointer(c.Log),
+		Username: gosettings.CopyPointer(c.Username),
+		Password: gosettings.CopyPointer(c.Password),
 	}
 }
 
@@ -55,11 +65,15 @@ func (c *ControlServer) copy() (copied ControlServer) {
 func (c *ControlServer) overrideWith(other ControlServer) {
 	c.Address = gosettings.OverrideWithPointer(c.Address, other.Address)
 	c.Log = gosettings.OverrideWithPointer(c.Log, other.Log)
+	c.Username = gosettings.OverrideWithPointer(c.Username, other.Username)
+	c.Password = gosettings.OverrideWithPointer(c.Password, other.Password)
 }
 
 func (c *ControlServer) setDefaults() {
 	c.Address = gosettings.DefaultPointer(c.Address, ":8000")
 	c.Log = gosettings.DefaultPointer(c.Log, true)
+	c.Username = gosettings.DefaultPointer(c.Username, "")
+	c.Password = gosettings.DefaultPointer(c.Password, "")
 }
 
 func (c ControlServer) String() string {
@@ -69,6 +83,8 @@ func (c ControlServer) String() string {
 func (c ControlServer) toLinesNode() (node *gotree.Node) {
 	node = gotree.New("Control server settings:")
 	node.Appendf("Listening address: %s", *c.Address)
+	node.Appendf("Username: %s", gosettings.ObfuscateKey(*c.Username))
+	node.Appendf("Password: %s", gosettings.ObfuscateKey(*c.Password))
 	node.Appendf("Logging: %s", gosettings.BoolToYesNo(c.Log))
 	return node
 }
@@ -79,5 +95,7 @@ func (c *ControlServer) read(r *reader.Reader) (err error) {
 		return err
 	}
 	c.Address = r.Get("HTTP_CONTROL_SERVER_ADDRESS")
+	c.Username = r.Get("HTTP_CONTROL_SERVER_USER")
+	c.Password = r.Get("HTTP_CONTROL_SERVER_PASSWORD")
 	return nil
 }

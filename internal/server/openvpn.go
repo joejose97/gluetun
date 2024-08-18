@@ -11,12 +11,13 @@ import (
 )
 
 func newOpenvpnHandler(ctx context.Context, looper VPNLooper,
-	pfGetter PortForwardedGetter, w warner) http.Handler {
+	pfGetter PortForwardedGetter, w warner, a httpBasicAuth) http.Handler {
 	return &openvpnHandler{
 		ctx:    ctx,
 		looper: looper,
 		pf:     pfGetter,
 		warner: w,
+		auth:   a,
 	}
 }
 
@@ -25,6 +26,7 @@ type openvpnHandler struct {
 	looper VPNLooper
 	pf     PortForwardedGetter
 	warner warner
+	auth   httpBasicAuth
 }
 
 func (h *openvpnHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +44,9 @@ func (h *openvpnHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/settings":
 		switch r.Method {
 		case http.MethodGet:
-			h.getSettings(w)
+			if h.auth.isAuthorized(w, r) {
+				h.getSettings(w)
+			}
 		default:
 			errMethodNotSupported(w, r.Method)
 		}

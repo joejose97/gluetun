@@ -10,13 +10,14 @@ import (
 )
 
 func newVPNHandler(ctx context.Context, looper VPNLooper,
-	storage Storage, ipv6Supported bool, w warner) http.Handler {
+	storage Storage, ipv6Supported bool, w warner, a httpBasicAuth) http.Handler {
 	return &vpnHandler{
 		ctx:           ctx,
 		looper:        looper,
 		storage:       storage,
 		ipv6Supported: ipv6Supported,
 		warner:        w,
+		auth:          a,
 	}
 }
 
@@ -26,6 +27,7 @@ type vpnHandler struct {
 	storage       Storage
 	ipv6Supported bool
 	warner        warner
+	auth          httpBasicAuth
 }
 
 func (h *vpnHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -43,9 +45,13 @@ func (h *vpnHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/settings":
 		switch r.Method {
 		case http.MethodGet:
-			h.getSettings(w)
+			if h.auth.isAuthorized(w, r) {
+				h.getSettings(w)
+			}
 		case http.MethodPut:
-			h.patchSettings(w, r)
+			if h.auth.isAuthorized(w, r) {
+				h.patchSettings(w, r)
+			}
 		default:
 			errMethodNotSupported(w, r.Method)
 		}

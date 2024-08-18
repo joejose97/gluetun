@@ -39,7 +39,6 @@ type Storage interface {
 func (s *Settings) Validate(storage Storage, ipv6Supported bool,
 	warner Warner) (err error) {
 	nameToValidation := map[string]func() error{
-		"control server":  s.ControlServer.validate,
 		"dns":             s.DNS.validate,
 		"firewall":        s.Firewall.validate,
 		"health":          s.Health.Validate,
@@ -53,6 +52,9 @@ func (s *Settings) Validate(storage Storage, ipv6Supported bool,
 		// Pprof validation done in pprof constructor
 		"VPN": func() error {
 			return s.VPN.Validate(storage, ipv6Supported, warner)
+		},
+		"control server": func() error {
+			return s.ControlServer.validate(warner)
 		},
 	}
 

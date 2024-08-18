@@ -8,7 +8,7 @@ import (
 	"github.com/qdm12/gluetun/internal/models"
 )
 
-func New(ctx context.Context, address string, logEnabled bool, logger Logger,
+func New(ctx context.Context, address string, logEnabled bool, user string, pass string, logger Logger,
 	buildInfo models.BuildInformation, openvpnLooper VPNLooper,
 	pfGetter PortForwardedGetter, unboundLooper DNSLoop,
 	updaterLooper UpdaterLooper, publicIPLooper PublicIPLoop, storage Storage,
@@ -16,7 +16,7 @@ func New(ctx context.Context, address string, logEnabled bool, logger Logger,
 	server *httpserver.Server, err error) {
 	handler := newHandler(ctx, logger, logEnabled, buildInfo,
 		openvpnLooper, pfGetter, unboundLooper, updaterLooper, publicIPLooper,
-		storage, ipv6Supported)
+		storage, ipv6Supported, user, pass)
 
 	httpServerSettings := httpserver.Settings{
 		Address: address,

@@ -470,10 +470,12 @@ func _main(ctx context.Context, buildInfo models.BuildInformation,
 
 	controlServerAddress := *allSettings.ControlServer.Address
 	controlServerLogging := *allSettings.ControlServer.Log
+	controlServerUsername := *allSettings.ControlServer.Username
+	controlServerPassword := *allSettings.ControlServer.Password
 	httpServerHandler, httpServerCtx, httpServerDone := goshutdown.NewGoRoutineHandler(
 		"http server", goroutine.OptionTimeout(defaultShutdownTimeout))
 	httpServer, err := server.New(httpServerCtx, controlServerAddress, controlServerLogging,
-		logger.New(log.SetComponent("http server")),
+		controlServerUsername, controlServerPassword, logger.New(log.SetComponent("http server")),
 		buildInfo, vpnLooper, portForwardLooper, unboundLooper, updaterLooper, publicIPLooper,
 		storage, ipv6Supported)
 	if err != nil {
