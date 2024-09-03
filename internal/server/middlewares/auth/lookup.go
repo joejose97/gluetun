@@ -17,6 +17,8 @@ func settingsToLookupMap(settings Settings) (routeToRoles map[Route][]internalRo
 		switch auth.Method {
 		case MethodNone:
 			authNameToChecker[auth.Name] = newNoneMethod()
+		case MethodBasic:
+			authNameToChecker[auth.Name] = newBasicAuthMethod(auth.Username, auth.Password)
 		default:
 			return nil, fmt.Errorf("%w: %s", ErrMethodNotSupported, auth.Name)
 		}

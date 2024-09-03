@@ -120,7 +120,8 @@ func (s Settings) ToLinesNode() (node *gotree.Node) {
 }
 
 const (
-	MethodNone = "none"
+	MethodNone  = "none"
+	MethodBasic = "basic"
 )
 
 // Auth contains the authentication method name and fields
@@ -130,6 +131,10 @@ type Auth struct {
 	Name string
 	// Method is the authentication method to use.
 	Method string
+	// Username for HTTP Basic authentication method.
+	Username string
+	// Password for HTTP Basic authentication method.
+	Password string
 }
 
 func (a Auth) validate() (err error) {
@@ -145,7 +150,7 @@ var (
 )
 
 func validateAuthMethod(method string) (err error) {
-	err = validate.IsOneOf(method, MethodNone)
+	err = validate.IsOneOf(method, MethodNone, MethodBasic)
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrMethodNotSupported, method)
 	}
